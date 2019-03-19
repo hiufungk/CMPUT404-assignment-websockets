@@ -97,9 +97,7 @@ def read_ws(ws,client):
     print("read_ws")
     try:
         while True:
-            print("before ws receive")
             msg = ws.receive()
-            print("after ws receive")
             print("WS RECV: %s" % msg)
             if (msg is not None):
                 packet = json.loads(msg)
@@ -126,20 +124,10 @@ def subscribe_socket(ws):
         while True:
             # block here
             msg = client.get()
-            print("msg:", msg)
-            # data = json.dumps(myWorld.world())
-
             if (msg is not None):
-                print("before ws send")
                 ws.send(msg)
             else:
                 break
-
-
-            # data = json.dumps(msg)
-            # print("before ws send")
-            # ws.send(data)
-            # print("after ws send")
     except Exception as e:# WebSocketError as e:
         print("WS Error %s" % e)
     finally:
