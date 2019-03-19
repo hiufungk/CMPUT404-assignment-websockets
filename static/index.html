@@ -78,12 +78,52 @@ function clearFrame() {
 
 }
 
+//draw a X for the end
+function drawStart(context,entity) {
+    with(context) {
+        beginPath();              
+        let x = entity["x"];;
+        let y = entity["y"];;
+        let length = 10;
+        fillStyle = entity["colour"];
+        strokeStyle = fillStyle;
+        moveTo(x-length,y-length);
+        lineTo(x+length,y+length);
+        moveTo(x+length,y-length);
+        lineTo(x-length,y+length);
+        stroke();                              
+    }
+}
+
+//draw a + for the end
+function drawEnd(context,entity) {
+    with(context) {
+        beginPath();              
+        let x = entity["x"];
+        let y = entity["y"];
+        let length = 15;
+        fillStyle = entity["colour"];
+        strokeStyle = fillStyle;
+        moveTo(x,y-length);
+        lineTo(x,y+length);
+        moveTo(x-length,y);
+        lineTo(x+length,y);
+        stroke();                                
+    }
+}
+
 // This actually draws the frame
 function renderFrame() {
     clearFrame();
     for (var key in world) {
         var entity = world[key];
-        drawCircle(context,prepEntity(entity));
+        if(entity["type"] == "start") {
+            drawStart(context,prepEntity(entity));
+        } else if(entity["type"] == "end") {
+            drawEnd(context,prepEntity(entity));
+        } else {
+            drawCircle(context,prepEntity(entity));
+        }
     }
 }
 
@@ -123,8 +163,12 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    //drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just modified!
+    let payload = { key: entity, value: world[entity] }
+    let jsonPayload = JSON.stringify(payload);
+    console.log("send stuff")
+    socket.send(jsonPayload);
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -230,17 +274,20 @@ mouse = (function() {
 
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
+let currentColour;
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    //random colour snippet from 5 March 2019 https://www.paulirish.com/2009/random-hex-color-code-snippets/
+    currentColour = '#' + Math.floor(Math.random()*16777215).toString(16);
+    addEntityWithoutName({'x':x,'y':y,'colour':'blue', "type": "start"});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour':'red', "type": "end"});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y,'colour':currentColour,
+                          'radius':1});
 });
 
 
@@ -254,14 +301,17 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        debug("socket on open");
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
     socket.onmessage = function(msg) {  
         try {
-            debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            //debug("WebSocket Recv:" + msg.data);
+            //XXX: TODO What are you going to do here?      
+            world = JSON.parse(msg.data);    
+            drawNextFrame()
         } catch (e) {
             alert("socket on message: " + e);
         }
