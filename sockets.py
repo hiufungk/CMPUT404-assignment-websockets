@@ -126,11 +126,20 @@ def subscribe_socket(ws):
         while True:
             # block here
             msg = client.get()
-            data = json.dumps(myWorld.world())
-            print("before ws send")
-            # ws.send(json.dumps({"msg":"bb"}))
-            ws.send(data)
-            print("after ws send")
+            print("msg:", msg)
+            # data = json.dumps(myWorld.world())
+
+            if (msg is not None):
+                print("before ws send")
+                ws.send(msg)
+            else:
+                break
+
+
+            # data = json.dumps(msg)
+            # print("before ws send")
+            # ws.send(data)
+            # print("after ws send")
     except Exception as e:# WebSocketError as e:
         print("WS Error %s" % e)
     finally:
