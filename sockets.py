@@ -131,6 +131,7 @@ def subscribe_socket(ws):
     except Exception as e:# WebSocketError as e:
         print("WS Error %s" % e)
     finally:
+        ws.close()
         clients.remove(client)
         gevent.kill(g)
     return None
