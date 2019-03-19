@@ -66,14 +66,51 @@ def set_listener( entity, data ):
 
 myWorld.add_set_listener( set_listener )
         
+
+clients = list()
+
+def send_all(msg):
+    for client in clients:
+        client.put( msg )
+
+def send_all_json(obj):
+    send_all( json.dumps(obj) )
+
+class Client:
+    def __init__(self):
+        self.queue = queue.Queue()
+
+    def put(self, v):
+        self.queue.put_nowait(v)
+
+    def get(self):
+        return self.queue.get()
+
 @app.route('/')
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    return flask.redirect("/static/index.html")
 
 def read_ws(ws,client):
     '''A greenlet function that reads from the websocket and updates the world'''
     # XXX: TODO IMPLEMENT ME
+    print("read_ws")
+    try:
+        while True:
+            print("before ws receive")
+            msg = ws.receive()
+            print("after ws receive")
+            print("WS RECV: %s" % msg)
+            if (msg is not None):
+                packet = json.loads(msg)
+                send_all_json( packet )
+                keys = packet.keys()
+                for key in keys:
+                    myWorld.set(key, packet[key])
+            else:
+                break
+    except:
+        '''Done'''
     return None
 
 @sockets.route('/subscribe')
@@ -81,6 +118,24 @@ def subscribe_socket(ws):
     '''Fufill the websocket URL of /subscribe, every update notify the
        websocket and read updates from the websocket '''
     # XXX: TODO IMPLEMENT ME
+    client = Client()
+    clients.append(client)
+    g = gevent.spawn( read_ws, ws , "")    
+    ws.send(json.dumps(myWorld.world()))
+    try:
+        while True:
+            # block here
+            msg = client.get()
+            data = json.dumps(myWorld.world())
+            print("before ws send")
+            # ws.send(json.dumps({"msg":"bb"}))
+            ws.send(data)
+            print("after ws send")
+    except Exception as e:# WebSocketError as e:
+        print("WS Error %s" % e)
+    finally:
+        clients.remove(client)
+        gevent.kill(g)
     return None
 
 
