@@ -94,7 +94,6 @@ def hello():
 def read_ws(ws,client):
     '''A greenlet function that reads from the websocket and updates the world'''
     # XXX: TODO IMPLEMENT ME
-    print("read_ws")
     try:
         while True:
             msg = ws.receive()
