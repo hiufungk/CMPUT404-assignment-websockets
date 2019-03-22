@@ -167,7 +167,6 @@ function addEntity(entity, data) {
     //XXX: Send a XHTML Request that updates the entity you just modified!
     let payload = { [entity]: world[entity] }
     let jsonPayload = JSON.stringify(payload);
-    console.log("send stuff")
     socket.send(jsonPayload);
 }
 var counter = 0;
